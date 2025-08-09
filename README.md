@@ -19,9 +19,6 @@ The result is **faster bookings**, **fewer errors**, and **better patient experi
 ```
 Caller → VAPI Voice Assistant (Ken) → Tools → n8n Workflows → Google Sheets
 ```
-![Flow Diagram](docs/vapi_n8n_flowchart.png)  
-![High-Level Architecture](docs/vapi_n8n_high_level_architecture_no_mongo.png)  
-![Compact Architecture](docs/vapi_n8n_compact_architecture.png)  
 
 ---
 
