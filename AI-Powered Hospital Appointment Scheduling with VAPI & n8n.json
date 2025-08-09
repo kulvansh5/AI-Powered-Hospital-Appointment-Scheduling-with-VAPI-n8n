@@ -1,0 +1,1403 @@
+{
+  "name": "AI-Powered Hospital Appointment Scheduling with VAPI & n8n",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Preferred date: {{ $json.body.message.toolWithToolCallList[0].toolCall.function.arguments.preferred_date }}, Appointment type: {{ $json.body.message.toolWithToolCallList[0].toolCall.function.arguments.appointment_type }}, The current date is {{ $now }}, \nWhen you output the user’s requested date in your final response, make sure it is in a user-friendly format (e.g., \"Wednesday, August 6, 2025\"), Do not use ISO format, Do not use line breaks or `\\n`, strictly separate all details with commas.\n\n",
+        "options": {
+          "systemMessage": "=<system_prompt>\nYOU ARE THE WORLD'S LEADING EXPERT AGENT IN SCHEDULING MANAGEMENT, SPECIALIZING IN RETRIEVING AND PROVIDING AVAILABLE APPOINTMENT SLOTS FOR DOCTORS USING THE GOOGLE SHEETS TOOL. YOUR PRIMARY FUNCTION IS TO QUICKLY AND PRECISELY IDENTIFY AVAILABLE SLOT TIMES FROM THE GOOGLE SHEET DATA AND CLEARLY COMMUNICATE THESE TIMES TO USERS SEEKING APPOINTMENTS.\n\n### OBJECTIVE ###\n- Extract and present accurate available appointment slots.\n- Always provide **date, day, start time, and end time** clearly.\n- Suggest alternative slots if requested ones are unavailable.\n- Never show booked, reserved, or unavailable slots.\n- If the **doctor name is not provided**, show available slots grouped by **doctor name**.\n\n---\n\n### INSTRUCTIONS ###\n\n1. **Data Handling**\n   - Retrieve slots from the Google Sheet data provided by the tool.\n   - Only present slots that are clearly marked as **available**.\n\n2. **Doctor Name Handling**\n   - If the user specifies a doctor name:\n     - Filter slots for that doctor only.\n   - If the user does **NOT** specify a doctor name:\n     - Present available slots for **all doctors**, grouping them by doctor name.\n\n3. **Response Formatting**\n   - List each available slot in bullet format under the doctor’s name.\n   - Include full date (e.g., Monday, August 7, 2025), and time range (e.g., 2:00 PM – 2:30 PM).\n   - Maintain a **professional, clear, and concise** tone.\n\n4. **Alternative Suggestions**\n   - If the requested slot is unavailable, suggest the nearest available options.\n   - If no slots are available, clearly state: \"No available slots found for the requested date/time.\"\n\n5. **No Assumptions**\n   - Do NOT infer availability if data is missing or unclear.\n   - Always explicitly mention when information cannot be found.\n\n---\n\n### CHAIN OF THOUGHT PROCESS ###\n\nFollow this internal reasoning process strictly (never reveal to the user):\n\n- Step 1: Understand user query (doctor name, requested time/day).  \n- Step 2: Analyze Google Sheet slot data (filter by doctor, date, status = available).  \n- Step 3: If doctor name missing → group slots by doctor name and display.  \n- Step 4: Identify matching slots; if none, find closest alternatives.  \n- Step 5: Format results in a **clear, bullet-point list** with date & time.  \n- Step 6: Provide clear confirmation or unavailability message.  \n\n---\n\n### RESPONSE EXAMPLES ###\n\n**Case 1: Doctor Name Provided**  \nUser: \"Is Dr. Johnson available on Monday afternoon?\"  \nAgent:  \n\"Yes, Dr. Johnson has the following available slots on Monday afternoon:  \n- Monday, August 7: 2:00 PM – 2:30 PM  \n- Monday, August 7: 3:00 PM – 3:30 PM  \n- Monday, August 7: 4:00 PM – 4:30 PM\"\n\n---\n\n**Case 2: Doctor Name Not Provided**  \nUser: \"Any available slots on Monday afternoon?\"  \nAgent:  \n\"Here are the available slots for all doctors on Monday afternoon:  \n\n**Dr. Johnson**  \n- Monday, August 7: 2:00 PM – 2:30 PM  \n- Monday, August 7: 3:00 PM – 3:30 PM  \n\n**Dr. Smith**  \n- Monday, August 7: 2:30 PM – 3:00 PM  \n- Monday, August 7: 4:00 PM – 4:30 PM\"\n\n---\n\n### STRICT RULES ###\n- Do not present booked/reserved/unavailable slots.\n- Do not provide vague times (e.g., \"afternoon\" or \"morning\").\n- Do not ask unnecessary questions unless clarification is required.\n- Always prioritize **accuracy and clarity**.\n\n</system_prompt>\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        512,
+        464
+      ],
+      "id": "71eb0036-b5cc-492b-b179-f1a554bc521c",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1zz0FHJNv6osjeFcQVuEVidxLj5dx9aH6v8qlHoeSTag",
+          "mode": "list",
+          "cachedResultName": "Appoint Booking Hospital",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zz0FHJNv6osjeFcQVuEVidxLj5dx9aH6v8qlHoeSTag/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Gynecology",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zz0FHJNv6osjeFcQVuEVidxLj5dx9aH6v8qlHoeSTag/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        704,
+        688
+      ],
+      "id": "20ced44e-cf64-48d7-981f-a85001da7dd7",
+      "name": "Get row(s) in sheet in Google Sheets1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "6JYVqrmTUFPTmQcx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.message.toolCalls[0].function.name }}",
+                    "rightValue": "appointment_schudeling",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "b83fbf5f-65cd-4ddc-a188-0500778f9005"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "appointment_schudeling"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0262ac4d-4855-4a45-9945-6d0096a6d476",
+                    "leftValue": "={{ $json.body.message.toolCallList[0].function.name }}",
+                    "rightValue": "Free_slot_info_tool",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Free_slot_info_tool"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        0,
+        176
+      ],
+      "id": "114b4d19-10f3-4a50-994c-264d89469568",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        688
+      ],
+      "id": "95128089-13bb-4179-a31d-bcef43a21004",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "zj744OGxNsqiDnHV",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "caa3a2df-281d-4699-ac26-1aac82d1c50b",
+              "name": "body.message.artifact.messagesOpenAIFormatted",
+              "value": "={{ $json.body.message.artifact.messagesOpenAIFormatted }}",
+              "type": "array"
+            },
+            {
+              "id": "95f66022-11fe-4fbb-b903-67943abcf8f6",
+              "name": "body.message.toolWithToolCallList[0].toolCall.function.arguments.preferred_date",
+              "value": "={{ $json.body.message.toolWithToolCallList[0].toolCall.function.arguments.preferred_date }}",
+              "type": "string"
+            },
+            {
+              "id": "1d242f35-b2e4-4253-b4d3-047648ccb8a5",
+              "name": "body.message.toolWithToolCallList[0].toolCall.function.arguments.appointment_type",
+              "value": "={{ $json.body.message.toolWithToolCallList[0].toolCall.function.arguments.appointment_type }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        464
+      ],
+      "id": "a88e9dfb-4d1b-41eb-85f9-0376b446431f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "Assistant",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -224,
+        176
+      ],
+      "id": "997c13ae-2d1e-41ff-ba3f-e8891befcfb4",
+      "name": "Webhook",
+      "webhookId": "07e598c0-02b6-442f-81a9-1fc5f0dcb4b5"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n    \"results\": [\n        {\n            \"toolCallId\": \"{{ $('Webhook').item.json.body.message.toolCallList[0].id }}\",\n            \"result\": \"{{ $json.cleanedText }}\"\n        }\n    ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1360,
+        464
+      ],
+      "id": "0ec6a25a-ad63-4502-becb-07b0b5751529",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.message.toolCalls[0].id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        576,
+        688
+      ],
+      "id": "6bfd90b2-15f9-4340-9865-c3247537c2bd",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1762f22-68d7-48d2-bbe2-c49550248b46",
+              "name": "output",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "9f191c60-4c2c-4732-bb9e-060e74131f7d",
+              "name": "body.message.toolWithToolCallList[0].toolCall.id",
+              "value": "={{ $('Webhook').item.json.body.message.toolWithToolCallList[0].toolCall.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        464
+      ],
+      "id": "5749d4fb-74c9-47c5-aca5-bcaeee0ce3a0",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the raw text from the previous node (AI Agent output)\nconst rawOutput = $input.first().json.output|| \"\";\n\n// 1. Remove markdown (like ** for bold) and bullet dashes (-)\nlet cleaned = rawOutput\n  .replace(/\\*\\*/g, '')    // remove bold markers\n  .replace(/-\\s*/g, '')    // remove bullet dashes\n  .replace(/\\n+/g, ', ')   // replace newlines with commas\n  .replace(/\\s+,/g, ',');  // remove extra spaces before commas\n\n// 2. Trim trailing commas and extra spaces\ncleaned = cleaned.replace(/,\\s*$/, '').trim();\n\n// Return cleaned output\nreturn [{ json: { cleanedText: cleaned } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        464
+      ],
+      "id": "f7e4a142-e787-4efa-8a2c-06a67ceb1788",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0a15c62d-d985-4ec4-bbac-9928ebfa98c6",
+              "name": "Patient name",
+              "value": "={{ $json.body.message.toolCallList[0].function.arguments.patient_name }}",
+              "type": "string"
+            },
+            {
+              "id": "e724cec2-48a7-48ef-9856-7e480fe1240c",
+              "name": "mobile number",
+              "value": "={{ $json.body.message.toolCallList[0].function.arguments.mobile_number }}",
+              "type": "string"
+            },
+            {
+              "id": "6c9ac63d-4c87-40bc-8053-7192d01e755c",
+              "name": "Patient status",
+              "value": "={{ $json.body.message.toolCallList[0].function.arguments.status }}",
+              "type": "string"
+            },
+            {
+              "id": "db4093e1-a1b0-4ffd-8db8-f1d358486d17",
+              "name": "body.message.toolCalls[0].function.arguments.Booking_Time",
+              "value": "={{ $json.body.message.toolCalls[0].function.arguments.Booking_Time }}",
+              "type": "string"
+            },
+            {
+              "id": "4e07da61-b6af-4ae4-96a4-cb2fd084c6c2",
+              "name": "body.message.toolCalls[0].function.arguments.Privious_Booking_time",
+              "value": "={{ $json.body.message.toolCalls[0].function.arguments.Privious_Booking_time }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        -112
+      ],
+      "id": "a724adf1-e6e6-4634-96a6-4e2cd4757cd9",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json[\"Patient status\"] }}",
+                    "rightValue": "new",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "b31c75dd-e88a-4e36-b89c-df42cc779a24"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "New"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f8f16537-bdfd-43d2-9b2f-1cfb1bf52070",
+                    "leftValue": "={{ $json[\"Patient status\"] }}",
+                    "rightValue": "Cancellation",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Cancellation"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0a83302c-ebdf-415a-a57c-d11ddecb9388",
+                    "leftValue": "={{ $json[\"Patient status\"] }}",
+                    "rightValue": "Reschedule Appointment",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Reschedule Appointment"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        576,
+        -128
+      ],
+      "id": "04b461e2-4201-47a3-b791-c424c39556ca",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1zz0FHJNv6osjeFcQVuEVidxLj5dx9aH6v8qlHoeSTag",
+          "mode": "list",
+          "cachedResultName": "Appoint Booking Hospital",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zz0FHJNv6osjeFcQVuEVidxLj5dx9aH6v8qlHoeSTag/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Gynecology",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zz0FHJNv6osjeFcQVuEVidxLj5dx9aH6v8qlHoeSTag/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Slot Time": "={{ $json.body.message.toolCalls[0].function.arguments.Booking_Time }}",
+            "Slot": "Booked",
+            "Patient Name": "={{ $json[\"Patient name\"] }}",
+            "Patient Phone": "={{ $json[\"mobile number\"] }}",
+            "Notes": "={{ $json[\"Patient status\"] }}"
+          },
+          "matchingColumns": [
+            "Slot Time"
+          ],
+          "schema": [
+            {
+              "id": "Doctor Name",
+              "displayName": "Doctor Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Slot Time",
+              "displayName": "Slot Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Slot",
+              "displayName": "Slot",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Patient Name",
+              "displayName": "Patient Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Patient Phone",
+              "displayName": "Patient Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1360,
+        -304
+      ],
+      "id": "20ce4fb6-0675-4fc8-8463-689e5f9b3728",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "6JYVqrmTUFPTmQcx",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2b85a014-5edc-43d1-8298-c8dd57899653",
+              "name": "body.message.toolCalls[0].function.arguments.Booking_Time",
+              "value": "={{ new Date(\"1970-01-01 \" + $json.body.message.toolCalls[0].function.arguments.Booking_Time.split('–')[0].trim()).toTimeString().split(' ')[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "66255242-8e34-44d0-b3ce-b6111fe867e1",
+              "name": "Patient name",
+              "value": "={{ $json[\"Patient name\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "cffd95cb-975d-44d0-8ed1-7e58c1865c88",
+              "name": "mobile number",
+              "value": "={{ $json[\"mobile number\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "ce7f80d8-8fb0-4399-b259-3f2f0149cab8",
+              "name": "Patient status",
+              "value": "={{ $json[\"Patient status\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        -304
+      ],
+      "id": "1d99ab36-9906-4fd3-b605-703ae2fc0ca8",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "78c969fe-e53e-4b9b-a2b0-4604b73dcc71",
+              "name": "Patient name",
+              "value": "={{ $json[\"Patient name\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "7a6284e3-7ade-4243-8397-f00a2ef1c8eb",
+              "name": "mobile number",
+              "value": "={{ $json[\"mobile number\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "c1c14f60-defb-4fdc-b102-c4616875cd2e",
+              "name": "Patient status",
+              "value": "={{ $json[\"Patient status\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "2b1616f6-3e6f-474b-8bf5-85085ad15049",
+              "name": "body.message.toolCalls[0].function.arguments.Booking_Time",
+              "value": "={{ new Date(\"1970-01-01 \" + $json.body.message.toolCalls[0].function.arguments.Booking_Time.split('–')[0].trim()).toTimeString().split(' ')[0] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        -112
+      ],
+      "id": "6fe5db7c-c04f-49e3-8525-2a676465bc9e",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 👇 Manually define the field-value pairs to match and blank\nconst fieldValueMap = {\n  \"Patient name\": $input.first().json[\"Patient name\"],\n  \"mobile number\": $input.first().json[\"mobile number\"],\n  \"Patient status\": $input.first().json[\"Patient status\"]\n};\n\nreturn items.map(item => {\n  const data = item.json;\n\n  // Loop through the specified field-value pairs\n  for (const [field, valueToMatch] of Object.entries(fieldValueMap)) {\n    if (data[field] === valueToMatch) {\n      data[field] = \"\";  // Blank it only if value matches\n    }\n  }\n\n  return { json: data };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        -112
+      ],
+      "id": "8cc27a8c-2af6-4d1d-9c8a-db2f4de49565",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1zz0FHJNv6osjeFcQVuEVidxLj5dx9aH6v8qlHoeSTag",
+          "mode": "list",
+          "cachedResultName": "Appoint Booking Hospital",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zz0FHJNv6osjeFcQVuEVidxLj5dx9aH6v8qlHoeSTag/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Gynecology",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zz0FHJNv6osjeFcQVuEVidxLj5dx9aH6v8qlHoeSTag/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Slot Time": "={{ $json.body.message.toolCalls[0].function.arguments.Booking_Time }}",
+            "Patient Name": "={{ $json[\"Patient name\"] }}",
+            "Patient Phone": "={{ $json[\"mobile number\"] }}",
+            "Notes": "={{ $json[\"Patient status\"] }}",
+            "Slot": "Free"
+          },
+          "matchingColumns": [
+            "Slot Time"
+          ],
+          "schema": [
+            {
+              "id": "Doctor Name",
+              "displayName": "Doctor Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Slot Time",
+              "displayName": "Slot Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Slot",
+              "displayName": "Slot",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Patient Name",
+              "displayName": "Patient Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Patient Phone",
+              "displayName": "Patient Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1360,
+        -112
+      ],
+      "id": "d37e842e-22fb-4690-98d1-b9afc3bb3cea",
+      "name": "Update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "6JYVqrmTUFPTmQcx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a7cb5adc-da56-49a1-ae61-b51d8e249e86",
+              "name": "Patient name",
+              "value": "={{ $json[\"Patient name\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "75ac9e03-dcf9-4cae-b75f-e6a520a56e60",
+              "name": "mobile number",
+              "value": "={{ $json[\"mobile number\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "7d1f75cf-35b1-4a7b-8837-7e7be958f600",
+              "name": "Patient status",
+              "value": "={{ $json[\"Patient status\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "5972baf8-9643-4bf5-801e-c68ccbfcf708",
+              "name": "body.message.toolCalls[0].function.arguments.Booking_Time",
+              "value": "={{ new Date(\"1970-01-01 \" + $json.body.message.toolCalls[0].function.arguments.Booking_Time.split('–')[0].trim()).toTimeString().split(' ')[0].trim() }}\n\n",
+              "type": "string"
+            },
+            {
+              "id": "ae66b692-2a66-47a9-899d-e12ad7d9037b",
+              "name": "Privious booking time",
+              "value": "={{ new Date(\"1970-01-01 \" + $json.body.message.toolCalls[0].function.arguments.Privious_Booking_time.replace(/(\\r\\n|\\n|\\r)/gm, '').split('–')[0].trim()).toTimeString().split(' ')[0] }}\n\n\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        128
+      ],
+      "id": "3fb1965a-7956-476a-9be4-c3c520520d83",
+      "name": "Edit Fields5"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1zz0FHJNv6osjeFcQVuEVidxLj5dx9aH6v8qlHoeSTag",
+          "mode": "list",
+          "cachedResultName": "Appoint Booking Hospital",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zz0FHJNv6osjeFcQVuEVidxLj5dx9aH6v8qlHoeSTag/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Gynecology",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zz0FHJNv6osjeFcQVuEVidxLj5dx9aH6v8qlHoeSTag/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Slot Time": "={{ $json.body.message.toolCalls[0].function.arguments.Booking_Time }}",
+            "Slot": "=Booked",
+            "Patient Name": "={{ $json[\"Patient name\"] }}",
+            "Notes": "={{ $json[\"Patient status\"] }}",
+            "Patient Phone": "={{ $json[\"mobile number\"] }}"
+          },
+          "matchingColumns": [
+            "Slot Time"
+          ],
+          "schema": [
+            {
+              "id": "Doctor Name",
+              "displayName": "Doctor Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Slot Time",
+              "displayName": "Slot Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Slot",
+              "displayName": "Slot",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Patient Name",
+              "displayName": "Patient Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Patient Phone",
+              "displayName": "Patient Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1712,
+        304
+      ],
+      "id": "e869cf62-80a3-44c7-a621-ad139c332922",
+      "name": "Update row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "6JYVqrmTUFPTmQcx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const j = item.json;\n  const clean = v => typeof v === 'string' ? v.replace(/(\\r\\n|\\n|\\r)/g, '').trim() : v;\n\n  // Blank out these fields\n  j[\"Patient name\"] = \"\";\n  j[\"mobile number\"] = \"\";\n  j[\"Patient status\"] = \"\";\n\n  // Still clean Privious booking time so it matches in Google Sheets\n  j[\"Privious booking time\"] = clean(j[\"Privious booking time\"]);\n\n  // (Optional) clean nested Booking_Time if needed\n  const args = j?.body?.message?.toolCalls?.[0]?.function?.arguments;\n  if (args && typeof args.Booking_Time === 'string') {\n    args.Booking_Time = clean(args.Booking_Time);\n  }\n\n  return { json: j };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        80
+      ],
+      "id": "41b23266-c95b-4004-b1b1-3d38f1462304",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1zz0FHJNv6osjeFcQVuEVidxLj5dx9aH6v8qlHoeSTag",
+          "mode": "list",
+          "cachedResultName": "Appoint Booking Hospital",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zz0FHJNv6osjeFcQVuEVidxLj5dx9aH6v8qlHoeSTag/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Gynecology",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zz0FHJNv6osjeFcQVuEVidxLj5dx9aH6v8qlHoeSTag/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Slot Time": "={{ $json[\"Privious booking time\"] }}",
+            "Patient Name": "={{ $json[\"Patient name\"] }}",
+            "Patient Phone": "={{ $json[\"mobile number\"] }}",
+            "Notes": "={{ $json[\"Patient status\"] }}",
+            "Slot": "Free"
+          },
+          "matchingColumns": [
+            "Slot Time"
+          ],
+          "schema": [
+            {
+              "id": "Doctor Name",
+              "displayName": "Doctor Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Slot Time",
+              "displayName": "Slot Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Slot",
+              "displayName": "Slot",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Patient Name",
+              "displayName": "Patient Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Patient Phone",
+              "displayName": "Patient Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2064,
+        80
+      ],
+      "id": "6c0ed192-3777-49e0-99f3-04f373ca56e0",
+      "name": "Update row in sheet3",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "6JYVqrmTUFPTmQcx",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n    \"results\": [\n        {\n            \"toolCallId\": \"{{ $('Webhook').item.json.body.message.toolCallList[0].id }}\",\n            \"result\": \"{{ $json.Slot }}\"\n        }\n    ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2000,
+        352
+      ],
+      "id": "0d1cfdb2-067e-469b-88eb-7b496afb8c5c",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const j = item.json;\n  const clean = v => typeof v === 'string' ? v.replace(/(\\r\\n|\\n|\\r)/g,'').trim() : v;\n\n  // Clean top-level fields you use later\n  j[\"Patient name\"] = clean(j[\"Patient name\"]);\n  j[\"mobile number\"] = clean(j[\"mobile number\"]);\n  j[\"Patient status\"] = clean(j[\"Patient status\"]);\n  j[\"Privious booking time\"] = clean(j[\"Privious booking time\"]);\n\n  // (Optional) also clean the nested Booking_Time if you need it again later\n  const args = j?.body?.message?.toolCalls?.[0]?.function?.arguments;\n  if (args && typeof args.Booking_Time === 'string') {\n    args.Booking_Time = clean(args.Booking_Time);\n  }\n\n  return { json: j };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        208
+      ],
+      "id": "57d0d0c1-4db9-42dc-8f1d-dddea6aa993b",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n    \"results\": [\n        {\n            \"toolCallId\": \"{{ $('Webhook').item.json.body.message.toolCallList[0].id }}\",\n            \"result\": \"{{ $json.Slot }}\"\n        }\n    ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1776,
+        -320
+      ],
+      "id": "e31bafed-cdee-4178-8e73-1e8b177ca8f6",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n    \"results\": [\n        {\n            \"toolCallId\": \"{{ $('Webhook').item.json.body.message.toolCallList[0].id }}\",\n            \"result\": \"Booking Cancalled\"\n        }\n    ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1696,
+        -112
+      ],
+      "id": "c499d824-805f-43aa-ae3b-9bb8dc65f984",
+      "name": "Respond to Webhook3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet in Google Sheets1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet3": {
+      "main": [
+        []
+      ]
+    },
+    "Update row in sheet2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6e8104dd-c973-4fbd-904f-63fee380568a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ceac98c6d05d6d52fa99580d13c704133903d1aeb57e6f736668dead287918b3"
+  },
+  "id": "9atgPMz2jlKYnGkk",
+  "tags": []
+}
