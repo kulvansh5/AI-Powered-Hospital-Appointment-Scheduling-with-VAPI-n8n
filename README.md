@@ -1,169 +1,116 @@
-AI-Powered Hospital Appointment Scheduling with VAPI & n8n
-Voice assistant (“Ken”) that books, reschedules, and cancels hospital appointments using VAPI for calls and n8n for workflow automation with Google Sheets as the source of truth.
+# **AI-Powered Hospital Appointment Scheduling with VAPI & n8n**
 
+> A smart voice assistant that automates hospital appointment booking, rescheduling, and cancellation using **VAPI** for real-time calls and **n8n** for workflow automation with **Google Sheets** as the central database.
 
-✨ What this does
-Human-like voice booking over phone
+---
 
-Real-time slot lookup from Google Sheets
+## 📌 **Overview**
+This project implements a voice-based hospital appointment scheduling system that allows patients to **speak naturally** with an AI agent (**Ken**). The assistant can:
+- Check **real-time slot availability** from Google Sheets
+- Book appointments after confirmation
+- Offer rescheduling and cancellation
+- Support multiple doctors and locations
 
-Appointment booking directly from call
+The result is **faster bookings**, **fewer errors**, and **better patient experience** without increasing front-desk workload.
 
-Reschedule and cancellation flows
+---
 
-Multi-doctor, multi-location friendly
+## 🗺 **System Architecture**
+```
+Caller → VAPI Voice Assistant (Ken) → Tools → n8n Workflows → Google Sheets
+```
+![Flow Diagram](docs/vapi_n8n_flowchart.png)  
+![High-Level Architecture](docs/vapi_n8n_high_level_architecture_no_mongo.png)  
+![Compact Architecture](docs/vapi_n8n_compact_architecture.png)  
 
-Clear, patient-first conversation design
+---
 
-🗺️ Architecture
-scss
-Copy
-Edit
-Caller → VAPI (Ken) → Tools → n8n Workflows → Google Sheets
-Add your images under /docs/ and reference them:
-![Flow](docs/vapi_n8n_flowchart.png)
-![High-Level](docs/vapi_n8n_high_level_architecture.png)
-![Compact](docs/vapi_n8n_compact_architecture.png)
+## 🧠 **How It Works**
+1. **Greeting & Intent Detection**  
+   Ken greets the patient and identifies whether they want to book, reschedule, or cancel an appointment.
+2. **Information Gathering**  
+   Ken collects the appointment reason, preferred date/time, and doctor.
+3. **Slot Lookup**  
+   The `Free_slot_info_tool` checks Google Sheets for available slots.
+4. **Confirmation & Booking**  
+   Once the patient selects a slot, `appointment_booking` is triggered to reserve it.
+5. **Wrap-Up**  
+   Ken confirms the booking details and ends the call warmly.
 
-🧩 Tech Stack
-VAPI – Voice AI agent for natural conversations
+---
 
-n8n – Orchestration (slot lookup, booking)
+## 🛠 **Tools (VAPI Functions)**
 
-Google Sheets – Schedules, slots, appointments
+### `Free_slot_info_tool`
+- **Purpose:** Retrieve available appointment slots.
+- **When to Use:** After collecting appointment type, preferred date/time, and doctor.
+- **Returns:** List of available slots `{ date, day, start, end, doctor }`.
 
-🗣️ Assistant Behavior (Prompt Summary)
-Greets, understands intent, collects: reason, preferred date/time, doctor
+### `appointment_booking`
+- **Purpose:** Confirm and lock in an appointment.
+- **When to Use:** After patient confirms a specific slot.
+- **Returns:** Booking confirmation `{ appointment_id, date, time, doctor }`.
 
-Uses Free_slot_info_tool to fetch options
+---
 
-Confirms a slot and calls appointment_booking
+## 🧩 **Tech Stack**
+- **VAPI** – Voice AI agent for handling patient calls  
+- **n8n** – Workflow automation and tool orchestration  
+- **Google Sheets** – Centralized storage for doctors, slots, and appointments  
 
-Repeats details, shares prep info, closes warmly
+---
 
-🛠️ Tools (VAPI)
-Free_slot_info_tool
-Use when: Appointment type + date/time preference (+ doctor if any) are known
+## ⚙ **Setup Guide**
 
-Returns: List of available slots { date, day, start, end, doctor }
+### **1. Prerequisites**
+- VAPI account & number (SIP/WebRTC)
+- n8n (cloud or self-hosted, v1.0+)
+- Google Sheet with:
+  - `Doctors(id, name, department, location)`
+  - `Slots(id, doctor_id, date, start_time, end_time, status)`
+  - `Appointments(id, patient_name, phone, doctor_id, date, start_time, end_time, status)`
 
-appointment_booking
-Use when: Caller confirms specific slot
-
-Returns: Booking confirmation { appointment_id, date, time, doctor }
-
-Implement these tools as VAPI “functions” that call your n8n HTTP endpoints.
-
-⚙️ Setup
-1) Prerequisites
-VAPI account & phone number (or SIP/WebRTC)
-
-n8n (cloud or self-hosted, ≥ v1.0)
-
-Google Sheet with tabs:
-
-Doctors(id, name, department, location)
-
-Slots(id, doctor_id, date, start_time, end_time, status)
-
-Appointments(id, patient_name, phone, doctor_id, date, start_time, end_time, status)
-
-2) n8n environment
-Create n8n/.env (or use your deployment method):
-
-bash
-Copy
-Edit
+### **2. Configure n8n**
+Create `.env` file:
+```bash
 N8N_HOST=https://your-n8n.example.com
 GOOGLE_SHEETS_CREDENTIALS_JSON='{"type":"service_account","project_id":"..."}'
 SHEETS_SPREADSHEET_ID=YOUR_SPREADSHEET_ID
-3) Import workflows
-Import JSON from n8n/workflows/:
+```
+Import workflows:
+- `slot_lookup.json`
+- `appointment_booking.json`
 
-slot_lookup.json
+Publish workflows and note their endpoint URLs.
 
-appointment_booking.json
+### **3. Configure VAPI**
+- Create assistant “Ken”.
+- Paste `assistant_prompt.md`.
+- Add tools:
+  - `Free_slot_info_tool` → POST to `slot_lookup` workflow
+  - `appointment_booking` → POST to `appointment_booking` workflow
 
-Publish and note each workflow’s public endpoint URL.
+---
 
-4) Configure VAPI
-Create assistant “Ken”.
+## 📞 **Example Interaction**
+**Caller:** “Hi, I’d like to book an appointment with Dr. Smith next week.”  
+**Ken:** “Sure! Let me check… I have Tuesday at 2:30 PM or Thursday at 10:00 AM. Which works best?”  
+**Caller:** “Tuesday, 2:30.”  
+**Ken:** “Perfect. I’ve booked you for Tuesday, January 15th at 2:30 PM with Dr. Smith.”  
 
-Paste vapi/assistant_prompt.md.
+---
 
-Add tools with function signatures that POST to your n8n endpoints:
+## 📽 **Demo**
+*(Add your video link here once available)*
 
-Free_slot_info_tool → POST /slot-lookup
+---
 
-appointment_booking → POST /book
+## 🔐 **Privacy & Security**
+- No unnecessary PHI storage  
+- Service account for Sheets access  
+- Minimal workflow logging (no sensitive details)  
 
-Example tool payloads:
+---
 
-json
-Copy
-Edit
-// Free_slot_info_tool input
-{
-  "appointment_type": "General Checkup",
-  "preferred_date": "2025-08-12",
-  "preferred_time_window": "09:00-13:00",
-  "preferred_doctor": "Dr. Smith"
-}
-json
-Copy
-Edit
-// appointment_booking input
-{
-  "patient_name": "Jane Doe",
-  "phone": "+91XXXXXXXXXX",
-  "doctor_id": "DOC_001",
-  "slot_id": "SLOT_123",
-  "status": "Booked"
-}
-▶️ How it Works (Call Flow)
-Caller explains need → Ken gathers reason, date/time, doctor
-
-Ken calls Free_slot_info_tool → gets options from n8n (Sheets)
-
-Ken offers 2–3 best slots in friendly language
-
-Caller chooses → Ken calls appointment_booking
-
-n8n writes to Sheets
-
-Ken confirms details and wraps up
-
-🧪 Demo
-Screen recording only (no faces)
-
-Show:
-
-A call where the caller requests a slot
-
-Ken checks availability → offers options
-
-Booking confirmation
-
-Row added to Appointments sheet
-
-Place the video link here once ready.
-
-✅ Submission Checklist
- Source code / workflow design (n8n exports, VAPI prompt & tools)
-
- Demo video (screen recording)
-
- Short documentation (Problem → Solution → Tech Stack)
-
-🔐 Notes on Privacy & Safety
-Do not store PHI beyond what’s necessary for scheduling
-
-Use service accounts for Sheets access
-
-Log workflow events without sensitive content
-
-🤝 Contributing
-PRs are welcome! Please open an issue for feature requests or bugs.
-
-📄 License
-This project is licensed under the MIT License. See LICENSE for details.
+## 📄 **License**
+This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
